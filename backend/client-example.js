@@ -24,6 +24,7 @@ setInterval(async () => {
     const message = JSON.stringify({
         clientId: clientId,
         temperature: Math.round(Math.random() * (50 - 15) + 15),
+        humidity: Math.round(Math.random() * (50 - 15) + 15),
         timestamp: new Date().toLocaleTimeString(),
     })
     await Promise.all(

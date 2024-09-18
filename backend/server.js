@@ -1,8 +1,6 @@
 const mqtt = require("mqtt");
 
 const state = {};
-
-
 const clientId = "server" + Math.random().toString(36).substring(7);
 const client = mqtt.connect("mqtt://localhost:1884", {
     clientId: clientId,
@@ -22,15 +20,16 @@ client.on("message", (topic, message) => {
     if (topic === `telemetry`) {
         const data = JSON.parse(message.toString());
 
-        if (data.temperature >= 30)
-            state[data.clientId] = "ON FIRE";
-        else
-            state[data.clientId] = "COOL";
-
+        state[data.clientId] = {
+            temp: data.temperature,
+            humidity: data.humidity,
+            highTemp: data.temperature >= 30,
+            highHumidity: data.humidity >= 20
+        }
         console.log(data);
     }
-})
+});
 
 setInterval(() => {
     client.publish("broadcast", JSON.stringify(state));
-}, 3000)
+}, 2000)
