@@ -5,7 +5,7 @@ let state = {};
 const clientId = "server" + Math.random().toString(36).substring(7);
 
 const serverHost = "13.239.19.45";
-const client = mqtt.connect(`mqtt://${serverHost}:1883`, {
+const client = mqtt.connect(`mqtt://${serverHost}:1884`, {
     clientId: clientId,
 });
 
