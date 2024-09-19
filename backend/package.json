@@ -9,6 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "mqtt": "^5.10.1"
+    "mosquito": "file:",
+    "mqtt": "^5.10.1",
+    "serialport": "^12.0.0"
   }
 }
