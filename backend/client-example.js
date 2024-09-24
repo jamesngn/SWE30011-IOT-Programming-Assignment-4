@@ -1,98 +1,86 @@
 const mqtt = require("mqtt");
-const { SerialPort, ReadlineParser } = require("serialport"); 
+const { SerialPort, ReadlineParser } = require("serialport");
 
-const clientId = "S1";
+const clientId = "S1"; // Unique client ID for this device
 
 // AWS EC2 server
-const serverHost = "13.239.19.45";
+const serverHost = "3.107.3.0";
 const client = mqtt.connect(`mqtt://${serverHost}:1884`, {
-    clientId: clientId
+  clientId: clientId,
 });
 
-const portPath = "/dev/ttyACM0"; // Serial port path for Arduino
+const portPath = "COM6"; // Serial port path for Arduino
 
 // Initialize the serial port
 const port = new SerialPort({ path: portPath, baudRate: 9600 }, (err) => {
-    if (err) {
-        return console.log('Error: ', err.message);
-    }
-    console.log('Serial Port Opened on', portPath);
+  if (err) {
+    return console.log("Error: ", err.message);
+  }
+  console.log("Serial Port Opened on", portPath);
 });
 
-const parser = port.pipe(new ReadlineParser({ delimiter: '\n' }));
+const parser = port.pipe(new ReadlineParser({ delimiter: "\n" }));
 
 client.on("connect", () => {
-    console.log("Connected to MQTT broker!");
-    client.subscribe("broadcast", (err) => {
-        if (err) {
-            console.log(err);
-        } else {
-            console.log("Successfully subscribed to the broadcast topic");
-        }
-    });
+  console.log("Connected to MQTT broker!");
+  client.subscribe("broadcast", (err) => {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log("Successfully subscribed to the broadcast topic");
+    }
+  });
 });
 
 client.on("message", (topic, message) => {
-    if (topic === `broadcast`) {
-        const data = JSON.parse(message.toString());
-        const serverResponse = data['S1'];
+  if (topic === `broadcast`) {
+    try {
+      // Parse the message as a JSON object
+      const data = JSON.parse(message.toString());
 
-        if (serverResponse) {
-            const temperature = serverResponse.temp;
-            const humidity = serverResponse.humidity;
-            const highTemp = serverResponse.highTemp;
-            const highHumidity = serverResponse.highHumidity;
+      // Generate the LCD message for each client
+      let lcdmsg = "";
 
-            let lcdmsg = `${clientId}:`;
+      // Iterate over the array of client data
+      data.forEach((client, index) => {
+        const { clientId, danger } = client;
+        const status = danger ? "B" : "G";
 
-            if (highTemp && highHumidity) {
-                lcdmsg += ` HT,HH`;
-            } else if (highTemp && !highHumidity) {
-                lcdmsg += ` HT,LH`;
-            } else if (!highTemp && highHumidity) {
-                lcdmsg += ` LT,HH`;
-            } else {
-                lcdmsg += ` LT,LH`;
-            }
+        // Split the data into two lines based on index
+        lcdmsg += `${clientId}:${status},`;
+      });
 
-            console.log("LCD Message: ", lcdmsg);
-            port.write(lcdmsg + "\n");
+      // Remove the trailing comma
+      lcdmsg = lcdmsg.slice(0, -1);
 
-            // Send LED control command
-            if (highTemp) {
-                console.log("High temperature detected, sending LED_ON");
-                port.write("LED_ON\n"); // Send signal to turn on LED
-            } else {
-                console.log("Temperature normal, sending LED_OFF");
-                port.write("LED_OFF\n"); // Send signal to turn off LED
-            }
-        } else {
-            console.log("No sensor data received from server");
-        }
+      // Display the final LCD message
+      console.log("LCD Message: ", lcdmsg);
+      port.write(lcdmsg + "\n");
+    } catch (err) {
+      console.error("Error processing broadcast message:", err);
     }
+  }
 });
 
 // Listen to data from the Arduino
-parser.on('data', (data) => {
-    try {
-        const sensorData = JSON.parse(data.trim());
-        const temperature = sensorData.temperature;
-        const humidity = sensorData.humidity;
+parser.on("data", (data) => {
+  try {
+    const sensorData = JSON.parse(data.trim());
+    const { temperature, humidity } = sensorData;
 
-        if (!isNaN(temperature) && !isNaN(humidity)) {
-            const message = JSON.stringify({
-                clientId: clientId,
-                temperature: temperature,
-                humidity: humidity,
-                timestamp: new Date().toLocaleTimeString(),
-            });
+    if (!isNaN(temperature) && !isNaN(humidity)) {
+      const message = JSON.stringify({
+        clientId: clientId,
+        temperature: temperature,
+        humidity: humidity,
+        timestamp: new Date().toLocaleTimeString(),
+      });
 
-            // Publish the temperature data
-            client.publish(`telemetry/${clientId}`, message);
-            client.publish("telemetry", message);
-            console.log(`Published data: ${message}`);
-        }
-    } catch (err) {
-        console.error(`Error processing data: ${err}`);
+      // Publish the temperature and humidity data
+      client.publish("telemetry", message);
+      console.log(`Published data: ${message}`);
     }
+  } catch (err) {
+    console.error(`Error processing data: ${err}`);
+  }
 });
