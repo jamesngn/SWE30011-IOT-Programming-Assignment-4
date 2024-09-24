@@ -4,7 +4,7 @@ const { SerialPort, ReadlineParser } = require("serialport");
 const clientId = "S1"; // Unique client ID for this device
 
 // AWS EC2 server
-const serverHost = "localhost";
+const serverHost = "3.107.3.0";
 const client = mqtt.connect(`mqtt://${serverHost}:1884`, {
   clientId: clientId,
 });
@@ -47,7 +47,7 @@ client.on("message", (topic, message) => {
         const status = danger ? "B" : "G";
 
         // Split the data into two lines based on index
-          lcdmsg += `${clientId}:${status},`;
+        lcdmsg += `${clientId}:${status},`;
       });
 
       // Remove the trailing comma
@@ -56,7 +56,6 @@ client.on("message", (topic, message) => {
       // Display the final LCD message
       console.log("LCD Message: ", lcdmsg);
       port.write(lcdmsg + "\n");
-
     } catch (err) {
       console.error("Error processing broadcast message:", err);
     }
