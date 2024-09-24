@@ -4,7 +4,7 @@ const { SerialPort, ReadlineParser } = require("serialport");
 const clientId = "S1"; // Unique client ID for this device
 
 // AWS EC2 server
-const serverHost = "3.107.3.0";
+const serverHost = "localhost";
 const client = mqtt.connect(`mqtt://${serverHost}:1884`, {
   clientId: clientId,
 });
@@ -34,25 +34,31 @@ client.on("connect", () => {
 
 client.on("message", (topic, message) => {
   if (topic === `broadcast`) {
-    const data = JSON.parse(message.toString());
-    const serverResponse = data.find((entry) => entry.clientId === clientId);
+    try {
+      // Parse the message as a JSON object
+      const data = JSON.parse(message.toString());
 
-    if (serverResponse) {
-      const { temperature, humidity, danger } = serverResponse;
+      // Generate the LCD message for each client
+      let lcdmsg = "";
 
-      // Display data on LCD
-      let lcdmsg = `${clientId}:`;
+      // Iterate over the array of client data
+      data.forEach((client, index) => {
+        const { clientId, danger } = client;
+        const status = danger ? "B" : "G";
 
-      if (danger) {
-        lcdmsg += `B`;
-      } else {
-        lcdmsg += `G`;
-      }
+        // Split the data into two lines based on index
+          lcdmsg += `${clientId}:${status},`;
+      });
 
+      // Remove the trailing comma
+      lcdmsg = lcdmsg.slice(0, -1);
+
+      // Display the final LCD message
       console.log("LCD Message: ", lcdmsg);
       port.write(lcdmsg + "\n");
-    } else {
-      console.log("No sensor data received from server");
+
+    } catch (err) {
+      console.error("Error processing broadcast message:", err);
     }
   }
 });
