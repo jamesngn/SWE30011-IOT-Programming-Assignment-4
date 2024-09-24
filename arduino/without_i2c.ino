@@ -57,17 +57,28 @@ void loop() {
   if (Serial.available()) {
     String serialData = Serial.readStringUntil('\n');
     
-    // Control the LED based on the serial command
-    if (serialData == "LED_ON") {
-      digitalWrite(LED_PIN, HIGH);  // Turn LED on
-    } else if (serialData == "LED_OFF") {
-      digitalWrite(LED_PIN, LOW);   // Turn LED off
+    // Split the serial data for two lines
+    String line1 = "";
+    String line2 = "";
+    
+    int commaIndex = serialData.indexOf(",", 13);  // Find index of the comma after "S3:B"
+    
+    if (commaIndex != -1) {
+      // Split the message into two parts
+      line1 = serialData.substring(0, commaIndex);  // First part for the first line
+      line2 = serialData.substring(commaIndex + 1); // Second part for the second line
     } else {
-      // Display other messages received from the serial port
-      lcd.clear();
-      lcd.setCursor(0, 0);
-      lcd.print(serialData); // Display the message from the serial port
+      // If no comma found or message is short, display entire message on one line
+      line1 = serialData;
+      line2 = "";
     }
+
+    // Display messages on the LCD
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print(line1); // First line
+    lcd.setCursor(0, 1);
+    lcd.print(line2); // Second line
   }
 
   // Small delay to avoid rapid updates
