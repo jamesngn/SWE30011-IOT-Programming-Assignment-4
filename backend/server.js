@@ -56,15 +56,44 @@ client.on("message", (topic, message) => {
 setInterval(() => {
   // Check if the state is non-empty before publishing
   if (Object.keys(state).length > 0) {
-    const arr = Object.keys(state).map((key) => {
-      return {
-        clientId: key,
-        temperature: state[key].temperature,
-        humidity: state[key].humidity,
-        danger: state[key].danger,
-      };
-    });
-    console.log("Publishing state:", arr);
+    // const arr = Object.keys(state).map((key) => {
+    //   return {
+    //     clientId: key,
+    //     temperature: state[key].temperature,
+    //     humidity: state[key].humidity,
+    //     danger: state[key].danger,
+    //   };
+    // });
+
+    const arr = {
+      S1: {
+        temperature: 25,
+        humidity: 50,
+        danger: false,
+      },
+      S2: {
+        temperature: 35,
+        humidity: 25,
+        danger: false,
+      },
+      S3: {
+        temperature: 30,
+        humidity: 30,
+        danger: true,
+      },
+      S4: {
+        temperature: 50,
+        humidity: 40,
+        danger: true,
+      },
+      S5: {
+        temperature: 100,
+        humidity: 60,
+        danger: true,
+      },
+    };
+
+    console.log("Publishing state:", JSON.stringify(arr));
     client.publish("broadcast", JSON.stringify(arr));
   } else {
     console.log("No client data to broadcast.");
