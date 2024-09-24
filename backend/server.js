@@ -2,6 +2,7 @@ const mqtt = require("mqtt");
 
 // Global state object to track client data
 let state = {};
+//
 const clientId = "server" + Math.random().toString(36).substring(7);
 const client = mqtt.connect("mqtt://localhost:1884", {
   clientId: clientId,
