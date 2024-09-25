@@ -9,7 +9,7 @@ const client = mqtt.connect(`mqtt://${serverHost}:1884`, {
   clientId: clientId,
 });
 
-const portPath = "COM6"; // Serial port path for Arduino
+const portPath = "/dev/ttyACM0"; // Serial port path for Arduino
 
 // Initialize the serial port
 const port = new SerialPort({ path: portPath, baudRate: 9600 }, (err) => {
