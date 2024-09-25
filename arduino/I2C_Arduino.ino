@@ -60,23 +60,22 @@ void loop() {
 }
 
 void displayMessage(String message, float temp, float hum) {
-  lcd.clear();
+   lcd.clear();
   
- 
   lcd.setCursor(0, 0);
   lcd.print(message.substring(0, 16));
   
  
   lcd.setCursor(0, 1);
   if (message.length() > 16) {
-    int remainingChars = min(4, message.length() - 16);
+    int remainingChars = min(9, message.length() - 16);
     lcd.print(message.substring(16, 16 + remainingChars));
   }
   
-  lcd.setCursor(5, 1);
+
+  lcd.setCursor(10, 1);
   lcd.print("T:");
   lcd.print(int(temp));
   lcd.print("H:");
   lcd.print(int(hum));
-  lcd.print("%");
 }
