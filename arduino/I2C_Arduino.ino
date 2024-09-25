@@ -74,7 +74,6 @@ void updateSensorData() {
   lcd.print("%");
   
   // Serial communication
-  Serial.print("DATA:");
   Serial.print(DHT.temperature);
   Serial.print(",");
   Serial.println(DHT.humidity);
