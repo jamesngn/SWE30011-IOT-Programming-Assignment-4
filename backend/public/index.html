@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>IoT Weather Station Monitoring System</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 20px;
+                background-color: #f4f4f9;
+            }
+            h1 {
+                text-align: center;
+                color: #333;
+            }
+            .container {
+                width: 80%;
+                margin: 0 auto;
+            }
+            .section {
+                background-color: #fff;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                padding: 20px;
+                margin-bottom: 20px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            .section h2 {
+                margin-top: 0;
+                color: #555;
+            }
+            .station-status ul,
+            .manual-control ul {
+                list-style-type: none;
+                padding: 0;
+            }
+            .station-status li,
+            .manual-control li {
+                margin: 10px 0;
+                padding: 10px;
+                border-bottom: 1px solid #eee;
+            }
+            .station-status li:last-child,
+            .manual-control li:last-child {
+                border-bottom: none;
+            }
+            .button {
+                padding: 10px 20px;
+                border: none;
+                border-radius: 3px;
+                cursor: pointer;
+                margin-left: 10px;
+            }
+            .trigger-alert {
+                background-color: #e74c3c;
+                color: white;
+            }
+            .dismiss-alert {
+                background-color: #2ecc71;
+                color: white;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 20px 0;
+            }
+            table,
+            th,
+            td {
+                border: 1px solid #ddd;
+            }
+            th,
+            td {
+                padding: 10px;
+                text-align: center;
+            }
+            th {
+                background-color: #f9f9f9;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>IoT Weather Station Monitoring System</h1>
+        <div class="container">
+            <div class="section station-status">
+                <h2>Station Status</h2>
+                <ul id="station-status"></ul>
+            </div>
+            <div class="section manual-control">
+                <h2>Manual Control</h2>
+                <ul id="manual-control"></ul>
+            </div>
+        </div>
+
+        <script>
+            const stationStatusContainer = document.getElementById("station-status");
+            const manualControlContainer = document.getElementById("manual-control");
+
+            async function getData() {
+                const res = await fetch("http://3.107.3.0:3000/stations");
+                const stations = await res.json();
+                console.log(stations);
+
+                return stations;
+            }
+
+            setInterval(async () => {
+                const stations = await getData();
+
+                stations.forEach((station) => {
+                    let stationEl = document.getElementById(station.clientId);
+
+                    if (stationEl) {
+                        stationEl.textContent = `${station.clientId}: ${station.danger ? "High Temperature and Humidity" : "Normal"}`;
+                    } else {
+                        const stationEl = document.createElement("li");
+                        stationEl.setAttribute("id", station.clientId);
+                        stationEl.textContent = `${station.clientId}: ${station.danger ? "High Temperature and Humidity" : "Normal"}`;
+                        stationStatusContainer.appendChild(stationEl);
+
+                        const controlEl = document.createElement("li");
+                        controlEl.appendChild(document.createTextNode(`${station.clientId}: `));
+                        const activateBtn = document.createElement("button");
+                        activateBtn.setAttribute("class", "button trigger-alert");
+                        activateBtn.onclick = () => {
+                            fetch("http://3.107.3.0:3000/arm", {
+                                method: "POST",
+                                headers: {
+                                    Accept: "application/json",
+                                    "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify({
+                                    clientId: station.clientId,
+                                }),
+                            });
+                        };
+                        activateBtn.textContent = "Trigger Alert";
+
+                        const deactivateBtn = document.createElement("button");
+                        deactivateBtn.setAttribute("class", "button dismiss-alert");
+                        deactivateBtn.onclick = () => {
+                            fetch("http://3.107.3.0:3000/disarm", {
+                                method: "POST",
+                                headers: {
+                                    Accept: "application/json",
+                                    "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify({
+                                    clientId: station.clientId,
+                                }),
+                            });
+                        };
+                        deactivateBtn.textContent = "Dismiss Alert";
+
+                        controlEl.appendChild(activateBtn);
+                        controlEl.appendChild(deactivateBtn);
+
+                        controlEl.innerHtml = `${station.clientId}: <button class="button trigger-alert">Trigger Alert</button> <button class="button dismiss-alert">Dismiss Alert</button>`;
+                        manualControlContainer.appendChild(controlEl);
+                    }
+                });
+            }, 1000);
+        </script>
+    </body>
+</html>
